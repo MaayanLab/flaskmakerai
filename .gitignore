@@ -1,0 +1,38 @@
+secrets/*
+
+# Python-specific
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Flask-specific
+instance/
+*.log
+
+# Development tools
+*.swp
+*.swo
+*.swn
+.vscode/
+.idea/
+*.DS_Store
+
+# Virtual environment
+bin/
+include/
+lib/
+lib64/
+pyvenv.cfg
+
+# Miscellaneous
+*.bak
+*.backup
+*.tmp
+*.temp

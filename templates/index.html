@@ -4,65 +4,88 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Project Configuration</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        label {
-            display: block;
-            margin-bottom: 5px;
-        }
-        input {
-            width: 100%;
-            padding: 8px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-    </style>
+    <!-- Include Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <h2>Project Configuration</h2>
-    <form method="POST" action="/">
-        <div class="form-group">
-            <label for="project_name">Project Name:</label>
-            <input type="text" id="project_name" name="project_name" required>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="bg-white p-8 rounded-lg shadow-lg w-full max-w-md">
+        <h2 class="text-2xl font-bold text-gray-800 mb-6 text-center">Project Configuration</h2>
+        
+        {% if error %}
+        <div class="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {{ error }}
         </div>
-        <div class="form-group">
-            <label for="creator">Creator:</label>
-            <input type="text" id="creator" name="creator" required>
+        {% endif %}
+
+        <form method="POST" action="/" class="space-y-4">
+            <div>
+                <label for="project_name" class="block text-sm font-medium text-gray-700">Project Name</label>
+                <input type="text" id="project_name" name="project_name" required 
+                       class="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-md focus:border-indigo-500 focus:ring-indigo-500 bg-white py-2 px-3">
+                {% if prefilled_data.projects %}
+                <p class="text-xs text-gray-500 mt-1">Existing projects: {{ prefilled_data.projects|join(', ') }}</p>
+                {% endif %}
+            </div>
+            <div>
+                <label for="creator" class="block text-sm font-medium text-gray-700">Creator</label>
+                <input type="text" id="creator" name="creator" required 
+                       value="{{ prefilled_data.creator }}"
+                       class="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-md focus:border-indigo-500 focus:ring-indigo-500 bg-white py-2 px-3">
+            </div>
+            <div class="relative">
+                <label for="openai_key" class="block text-sm font-medium text-gray-700">OpenAI Key</label>
+                <input type="password" id="openai_key" name="openai_key" 
+                       {% if prefilled_data.openai_key %}disabled value="*****************"{% endif %}
+                       class="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-md focus:border-indigo-500 focus:ring-indigo-500 py-2 px-3 {% if prefilled_data.openai_key %}bg-gray-100 text-gray-500{% else %}bg-white{% endif %}">
+                {% if prefilled_data.openai_key %}
+                <button type="button" id="edit_key_btn" 
+                        class="absolute right-2 top-1/2 mt-1 transform -translate-y-1/2 bg-indigo-500 text-white text-xs px-2 py-1 rounded hover:bg-indigo-600">
+                    Edit
+                </button>
+                <p class="text-xs text-gray-500 mt-1" id="key_status">Key found</p>
+                {% else %}
+                <p class="text-xs text-gray-500 mt-1" id="key_status">Key is stored securely and not displayed</p>
+                {% endif %}
+            </div>
+            <div>
+                <label for="basename" class="block text-sm font-medium text-gray-700">Base Name</label>
+                <input type="text" id="basename" name="basename" required 
+                       class="mt-1 block w-full rounded-md border-2 border-gray-400 shadow-md focus:border-indigo-500 focus:ring-indigo-500 bg-white py-2 px-3">
+            </div>
+            <button type="submit" 
+                    class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                Submit
+            </button>
+        </form>
+
+        {% if data %}
+        <div class="mt-6 p-4 bg-gray-50 rounded-md">
+            <h3 class="text-lg font-semibold text-gray-800 mb-2">Submitted Data</h3>
+            <p class="text-gray-600"><span class="font-medium">Project Name:</span> {{ data.project_name }}</p>
+            <p class="text-gray-600"><span class="font-medium">Creator:</span> {{ data.creator }}</p>
+            <p class="text-gray-600"><span class="font-medium">Base Name:</span> {{ data.basename }}</p>
         </div>
-        <div class="form-group">
-            <label for="openai_key">OpenAI Key:</label>
-            <input type="text" id="openai_key" name="openai_key" required>
-        </div>
-        <div class="form-group">
-            <label for="basename">Base Name:</label>
-            <input type="text" id="basename" name="basename" required>
-        </div>
-        <button type="submit">Submit</button>
-    </form>
-    {% if data %}
-    <h3>Submitted Data:</h3>
-    <p>Project Name: {{ data.project_name }}</p>
-    <p>Creator: {{ data.creator }}</p>
-    <p>OpenAI Key: {{ data.openai_key }}</p>
-    <p>Base Name: {{ data.basename }}</p>
-    {% endif %}
+        {% endif %}
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const editBtn = document.getElementById('edit_key_btn');
+            const keyInput = document.getElementById('openai_key');
+            const keyStatus = document.getElementById('key_status');
+
+            if (editBtn) {
+                editBtn.addEventListener('click', function() {
+                    keyInput.disabled = false;
+                    keyInput.value = ''; // Clear the asterisks
+                    keyInput.classList.remove('bg-gray-100', 'text-gray-500');
+                    keyInput.classList.add('bg-white');
+                    keyInput.focus();
+                    editBtn.style.display = 'none'; // Hide the Edit button
+                    keyStatus.textContent = 'Enter new key';
+                });
+            }
+        });
+    </script>
 </body>
 </html>

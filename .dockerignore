@@ -1,0 +1,34 @@
+# Python-specific
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Sensitive data
+secrets/*
+
+# Development tools and local configs
+.git
+.gitignore
+.vscode/
+.idea/
+*.DS_Store
+
+# Logs and temporary files
+*.log
+*.bak
+*.swp
+*.swo
+*.swn
+*.tmp
+*.temp
+
+# Docker-specific
+Dockerfile
+.dockerignore
