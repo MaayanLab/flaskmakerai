@@ -12,6 +12,7 @@ venv.bak/
 
 # Sensitive data
 secrets/*
+projects/*
 
 # Development tools and local configs
 .git

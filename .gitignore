@@ -1,4 +1,5 @@
 secrets/*
+projects/*
 
 # Python-specific
 __pycache__/

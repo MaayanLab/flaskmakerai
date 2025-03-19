@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flaskmaster - {{ project_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.4.12/ace.js"></script>
+    <style>
+        .max-h-340px { max-height: 340px; }
+        .speech-bubble {
+            overflow-x: auto;
+            overflow-y: hidden;
+            white-space: normal;
+            word-break: break-word;
+        }
+        .waiting-gif {
+            width: 24px;
+            height: 24px;
+            margin-right: 8px;
+        }
+        .sidebar {
+            transition: width 0.3s ease;
+        }
+        .sidebar-hidden {
+            width: 0;
+            overflow: hidden;
+        }
+        .sidebar-visible {
+            width: 250px;
+        }
+        .completed { color: #10B981; }
+        .pending { color: #6B7280; }
+        #file-modal {
+            display: none;
+        }
+        #file-modal.show {
+            display: block;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-row text-xs">
+    <aside id="sidebar" class="sidebar sidebar-visible bg-gray-100 text-gray-800 h-screen flex-shrink-0 border-r-2 border-gray-600">
+        <div class="p-4">
+            <h2 class="text-lg font-bold mb-4">Flask App Process</h2>
+            <ul class="space-y-2">
+                <li>
+                    <a href="#" class="block p-2 rounded hover:bg-gray-200 {% if progress.Backend %}completed{% else %}pending{% endif %}">
+                        Backend {% if progress.Backend %}✓{% endif %}
+                    </a>
+                    {% if progress.Backend %}
+                        <a href="#" class="block pl-6 text-[10px] hover:underline" onclick="showFile('{{ project_name }}', 'app.py', 'python')">View app.py</a>
+                    {% endif %}
+                </li>
+                <li>
+                    <a href="#" class="block p-2 rounded hover:bg-gray-200 {% if progress.Frontend %}completed{% else %}pending{% endif %}">
+                        Frontend {% if progress.Frontend %}✓{% endif %}
+                    </a>
+                </li>
+                <li>
+                    <a href="#" class="block p-2 rounded hover:bg-gray-200 {% if progress.Dockerization %}completed{% else %}pending{% endif %}">
+                        Dockerization {% if progress.Dockerization %}✓{% endif %}
+                    </a>
+                    {% if progress.Dockerization %}
+                        <a href="#" class="block pl-6 text-[10px] hover:underline" onclick="showFile('{{ project_name }}', 'Dockerfile', 'dockerfile')">View Dockerfile</a>
+                    {% endif %}
+                </li>
+                <li>
+                    <a href="#" class="block p-2 rounded hover:bg-gray-200 {% if progress.Deployment %}completed{% else %}pending{% endif %}">
+                        Deployment {% if progress.Deployment %}✓{% endif %}
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col min-w-0">
+        <header class="bg-indigo-600 text-white py-3 px-4 shadow-md flex items-center justify-between">
+            <div class="flex items-center">
+                <button id="toggle-sidebar" class="text-white mr-4 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                    </svg>
+                </button>
+                <h1 class="text-base font-bold">Flaskmaster for {{ project_name }}</h1>
+            </div>
+        </header>
+
+        <main class="flex-1 p-4 overflow-y-auto">
+            <div class="max-w-5xl mx-auto space-y-3" id="chat-container">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="flex {% if message.sender == 'You' %}justify-end pr-4{% else %}justify-start pl-4{% endif %}">
+                            <div class="speech-bubble max-w-xl p-3 rounded-lg shadow-md {% if message.sender == 'You' %}bg-indigo-500 text-white{% else %}bg-white text-gray-800{% endif %}">
+                                <p class="font-semibold text-[10px]">{{ message.sender | replace('Bot', 'FlaskBuddy') }}</p>
+                                <div class="message-text text-xs space-y-2">{{ message.text }}</div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center text-gray-500">
+                        <p class="text-[10px]">No messages yet. Start chatting below!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </main>
+
+        <footer class="bg-white p-3 border-t border-gray-200">
+            <form method="POST" action="/chat?project_name={{ project_name }}" class="max-w-5xl mx-auto" id="chat-form">
+                <div class="relative rounded-lg border-2 border-gray-400 shadow-md bg-white p-3 focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500">
+                    <textarea name="message" placeholder="Type your message..." 
+                              class="w-full border-0 focus:border-0 focus:ring-0 focus:outline-none appearance-none py-2 px-3 text-xs h-20 max-h-340px overflow-y-auto resize-y bg-white"></textarea>
+                    <div class="flex justify-end items-center space-x-2 mt-2">
+                        <select name="model" 
+                                class="bg-gray-100 border border-gray-300 text-xs py-1 px-2 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="o3-mini">o3-mini</option>
+                            <option value="gpt-4o-mini">gpt-4o-mini</option>
+                        </select>
+                        <button type="submit" 
+                                class="bg-indigo-600 text-white py-1 px-3 rounded-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 text-xs">
+                            Send
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </footer>
+    </div>
+
+    <!-- Modal for file viewing -->
+    <div id="file-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+        <div class="bg-white p-4 rounded-lg w-3/4 h-3/4">
+            <h2 id="modal-title" class="text-lg font-bold mb-2"></h2>
+            <div id="editor" style="width: 100%; height: 90%;"></div>
+            <button onclick="closeModal()" class="mt-4 bg-indigo-600 text-white py-1 px-3 rounded-md">Close</button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/2.4.0/purify.min.js"></script>
+    <script>
+        let editor;
+        function showFile(projectName, fileName, mode) {
+            fetch(`/project_files/${projectName}/${fileName}`)
+                .then(response => response.text())
+                .then(data => {
+                    document.getElementById('modal-title').textContent = fileName;
+                    document.getElementById('file-modal').classList.add('show');
+                    if (!editor) {
+                        editor = ace.edit("editor");
+                        editor.setTheme("ace/theme/monokai");
+                    }
+                    editor.session.setMode(`ace/mode/${mode}`);
+                    editor.setValue(data, -1);
+                })
+                .catch(error => console.error('Error fetching file:', error));
+        }
+
+        function closeModal() {
+            document.getElementById('file-modal').classList.remove('show');
+        }
+
+        function processMessages() {
+            const messageElements = document.querySelectorAll('.message-text');
+            messageElements.forEach(function(el) {
+                const rawText = el.textContent;
+                const html = marked.parse(rawText);
+                el.innerHTML = DOMPurify.sanitize(html);
+            });
+        }
+
+        function scrollToBottom() {
+            const main = document.querySelector('main');
+            main.scrollTop = main.scrollHeight;
+        }
+
+        function appendMessage(sender, text, isTemporary = false) {
+            const container = document.getElementById('chat-container');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `flex ${sender === 'You' ? 'justify-end pr-4' : 'justify-start pl-4'} items-center`;
+            
+            let innerHTML = '';
+            const senderDisplay = sender === 'You' ? 'You' : 'FlaskBuddy';
+            if (sender === 'You' || !isTemporary) {
+                innerHTML = `
+                    <div class="speech-bubble max-w-xl p-3 rounded-lg shadow-md ${sender === 'You' ? 'bg-indigo-500 text-white' : 'bg-white text-gray-800'}">
+                        <p class="font-semibold text-[10px]">${senderDisplay}</p>
+                        <div class="message-text text-xs space-y-2">${text}</div>
+                    </div>
+                `;
+            } else {
+                innerHTML = `
+                    <img src="/static/images/banana.gif" alt="Waiting..." class="waiting-gif">
+                    <div class="speech-bubble max-w-xl p-3 rounded-lg shadow-md bg-white text-gray-800">
+                        <p class="font-semibold text-[10px]">${senderDisplay}</p>
+                        <div class="message-text text-xs space-y-2">${text}</div>
+                    </div>
+                `;
+            }
+            
+            messageDiv.innerHTML = innerHTML;
+            if (isTemporary) messageDiv.dataset.temporary = 'true';
+            container.appendChild(messageDiv);
+            processMessages();
+            scrollToBottom();
+            return messageDiv;
+        }
+
+        function updateProgress(progress) {
+            document.querySelectorAll('#sidebar a').forEach(link => {
+                const text = link.textContent.trim().split(' ')[0];
+                if (progress[text]) {
+                    link.classList.remove('pending');
+                    link.classList.add('completed');
+                    if (!link.textContent.includes('✓')) {
+                        link.textContent += ' ✓';
+                    }
+                    if ((text === 'Backend' || text === 'Dockerization') && !link.nextElementSibling?.onclick) {
+                        const fileName = text === 'Backend' ? 'app.py' : 'Dockerfile';
+                        const fileLink = document.createElement('a');
+                        fileLink.href = '#';
+                        fileLink.className = 'block pl-6 text-[10px] hover:underline';
+                        fileLink.textContent = `View ${fileName}`;
+                        fileLink.onclick = () => showFile('{{ project_name }}', fileName, text === 'Backend' ? 'python' : 'dockerfile');
+                        link.parentElement.appendChild(fileLink);
+                    }
+                }
+            });
+        }
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('sidebar-visible');
+            sidebar.classList.toggle('sidebar-hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            processMessages();
+            scrollToBottom();
+
+            const textarea = document.querySelector('textarea[name="message"]');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = `${Math.min(this.scrollHeight, 340)}px`;
+            });
+
+            const form = document.getElementById('chat-form');
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+
+                const formData = new FormData(form);
+                const userInput = formData.get('message').trim();
+                if (!userInput) return;
+
+                appendMessage('You', userInput);
+                const funnyMessages = [
+                    "Hold on, I'm consulting the AI gods...",
+                    "Spinning up some wisdom, give me a sec!",
+                    "Beep boop, thinking real hard...",
+                    "Fetching brilliance from the cloud..."
+                ];
+                const randomFunny = funnyMessages[Math.floor(Math.random() * funnyMessages.length)];
+                const tempMessage = appendMessage('FlaskBuddy', randomFunny, true);
+
+                textarea.value = '';
+                textarea.style.height = 'auto';
+
+                fetch(form.action, {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        tempMessage.querySelector('.message-text').innerHTML = `Error: ${data.error}`;
+                        tempMessage.querySelector('.waiting-gif').remove();
+                    } else {
+                        const bubble = tempMessage.querySelector('.speech-bubble');
+                        bubble.querySelector('.message-text').innerHTML = data.bot_response;
+                        tempMessage.querySelector('.waiting-gif').remove();
+                        tempMessage.removeAttribute('data-temporary');
+                        if (data.progress) {
+                            updateProgress(data.progress);
+                        }
+                    }
+                    processMessages();
+                    scrollToBottom();
+                })
+                .catch(error => {
+                    tempMessage.querySelector('.message-text').innerHTML = `Error: ${error.message}`;
+                    tempMessage.querySelector('.waiting-gif').remove();
+                    processMessages();
+                    scrollToBottom();
+                });
+            });
+
+            const toggleButton = document.getElementById('toggle-sidebar');
+            toggleButton.addEventListener('click', toggleSidebar);
+        });
+    </script>
+</body>
+</html>
