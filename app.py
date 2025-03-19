@@ -133,7 +133,7 @@ def chat():
                 
                 chat_history.append({'sender': 'You', 'text': user_input})
                 if files_saved:
-                    bot_response += "\n\nFiles have been saved to the projects directory!"
+                    bot_response = "I’ve created the files! You can inspect `app.py` and `Dockerfile` in the sidebar on the left."
                 chat_history.append({'sender': 'Bot', 'text': bot_response})
                 return jsonify({
                     'bot_response': bot_response,
