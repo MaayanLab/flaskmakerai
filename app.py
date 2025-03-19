@@ -32,14 +32,37 @@ def get_text_completion(prompt, api_key, model):
     client = openai.OpenAI(api_key=api_key)
     
     role_prompt = '''
-    If the prompt contains a request about creating a Flask app, produce a JSON object with the following structure:
+    You are a specialized Flask application generator. Your task is to analyze user requests and generate appropriate code.
 
+    When responding to a request about creating a Flask app:
+    1. Generate a JSON object with the following structure:
     {
-        "app.py": "<code for Flask app>",
-        "docker": "<code for Dockerfile>"
+        "app.py": "<Flask application code with proper error handling and best practices>",
+        "docker": "<Production-ready Dockerfile with multi-stage builds and security considerations>"
     }
 
-    For any other prompt, return a plain text response.
+    The generated code should:
+    - Follow Flask best practices and patterns
+    - Include proper error handling and logging
+    - Use secure defaults and configurations
+    - Include helpful comments explaining key components
+    - Follow PEP 8 style guidelines for Python code
+    - Include necessary requirements.txt entries
+    - Implement proper security headers and CORS settings when applicable
+
+    For the Dockerfile:
+    - Use multi-stage builds for smaller image size
+    - Follow Docker best practices
+    - Include proper security considerations
+    - Set appropriate environment variables
+    - Use non-root user for security
+    - Include health checks
+
+    For any other prompt:
+    - Provide a clear, detailed response
+    - Include code examples when relevant
+    - Explain any technical concepts
+    - Suggest best practices and improvements
     '''
 
     completion = client.chat.completions.create(
@@ -133,30 +156,4 @@ def chat():
                 
                 chat_history.append({'sender': 'You', 'text': user_input})
                 if files_saved:
-                    bot_response = "I’ve created the files! You can inspect `app.py` and `Dockerfile` in the sidebar on the left."
-                chat_history.append({'sender': 'Bot', 'text': bot_response})
-                return jsonify({
-                    'bot_response': bot_response,
-                    'progress': project_progress.get(project_name, {})
-                })
-            except Exception as e:
-                return jsonify({'error': str(e)})
-    
-    progress = project_progress.get(project_name, {'Backend': False, 'Frontend': False, 'Dockerization': False, 'Deployment': False})
-    return render_template('chat.html', project_name=project_name, messages=chat_history, progress=progress)
-
-@app.route('/project_files/<project_name>/<filename>')
-def serve_project_file(project_name, filename):
-    project_dir = os.path.join('projects', project_name)
-    return send_from_directory(project_dir, filename)
-
-if __name__ == '__main__':
-    host = '127.0.0.1'
-    port = 5000
-    url = f'http://{host}:{port}'
-    webbrowser.open(url)
-    template_files = [
-        os.path.join('templates', 'index.html'),
-        os.path.join('templates', 'chat.html')
-    ]
-    app.run(host=host, port=port, debug=True, extra_files=template_files)
+                    bot_response = "I've created the files! You can inspect `app.py` and `
